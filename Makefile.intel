@@ -43,8 +43,8 @@ OBJECTS_DIR   = ./
 
 ####### Files
 
-SOURCES       = src/gaussian.cpp \
-		src/gaussian_main.cpp 
+SOURCES       = gaussian.cpp \
+		gaussian_main.cpp 
 OBJECTS       = gaussian.o \
 		gaussian_main.o
 DIST          = /usr/share/qt4/mkspecs/common/unix.conf \

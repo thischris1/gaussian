@@ -1,0 +1,3 @@
+[submodule "LLLHamiltonian"]
+	path = LLLHamiltonian
+	url = https://github.com/thischris1/LLLHamiltonian.git

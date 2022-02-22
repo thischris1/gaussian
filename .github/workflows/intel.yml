@@ -1,0 +1,57 @@
+name: Intel OneAPI build
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+jobs:
+  build_intel_champ_fparser:
+    runs-on: ubuntu-20.04
+    defaults:
+      run:
+        shell: bash --noprofile --norc {0}
+    steps:
+    - uses: actions/checkout@v2
+    - name: setup repo
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+        sudo echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+    - name: install
+      run: |
+        sudo apt-get install -y intel-oneapi-common-vars
+      
+        sudo apt-get install -y intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        sudo apt-get install -y intel-oneapi-mkl
+        sudo apt-get install -y intel-oneapi-mkl-devel
+        sudo apt-get install -y intel-oneapi-mkl-common-devel-2022.0.2
+        sudo apt-get install -y libeigen3-dev
+        sudo apt-get install -y libboost-all-dev
+        sudo apt-get install -y libarpack2-dev
+        sudo apt-get install -y libsuperlu-dev
+               
+    - name: Compile
+      run: |
+        source /opt/intel/oneapi/setvars.sh  --force -intel64
+        
+        printenv >> $GITHUB_ENV
+        
+        make -f Makefile.intel
+       
+        
+    - name: Commit scripts
+      run: |
+          git config --global user.name 'Bot'
+          git config --global user.email ''
+          git add -A libmanyParticle*
+          git diff-index --quiet HEAD || git commit -am "Automated script generated"
+          git push
+    - name: "Test the code"
+      run: |
+        echo "Running the tests using the Intel oneapi fortran compiler"
+        cd tests/test01
+        mpirun -np 1  $HOME/work/reponame/reponame/mpitest
+        ./$HOME/work/reponame/reponame/test_program

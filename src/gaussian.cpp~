@@ -109,22 +109,8 @@ int gaussian::readParameters(std::string & name_of_param_file)
 
 	// Filenames
 
-
-if ( !boost::filesystem::exists(name_of_param_file ) )
-{
-	ERROR("Could not open gaussian.par in ");
-	//glLogger.error( boost::current_path().string());
-	boost::filesystem::path full_path(boost::filesystem::current_path());
-	std::cout << "Current path is : " << full_path << std::endl;
-		return (-1);
-
-}
-
 	CFileParser *myParser = CFileParser::getInstance();
-	if 	(!myParser->readFile(name_of_param_file))
-		{
-			return (-1);
-		}
+	myParser->readFile(name_of_param_file);
 	baseFileprefix = myParser->getNextLine().getString();
 	stateFilePrefix = myParser->getNextLine().getString();
 	densFilePrefix   = myParser->getNextLine().getString();
@@ -174,7 +160,10 @@ if ( !boost::filesystem::exists(name_of_param_file ) )
 		m_impArray = tArray;
 		tArray.writePotentialToFile(std::string("./PotentialArray.dat"));
 		tArray.writePositionsToFile(std::string("./CheckGaussianArray.dat"));
-
+		if (m_potentialOnly == true)
+		{
+			exit(0);
+		}
 
 	}
 	else
@@ -191,19 +180,12 @@ if ( !boost::filesystem::exists(name_of_param_file ) )
 		else
 		{
 			m_impArray.readFromFile(impurityFileName);
-			if (m_impArray.getSize() > 1) {
-				m_impArray.writePotentialToFile(std::string("./PotentialArray.dat"));
-			}
 			glLogger.error("Impurities read from file");
 			glLogger.error(impurityFileName.c_str());
 			isRandomMatrix = false;
 			isRandomArray = false;
 		}
 	}
-	if (m_potentialOnly == true)
-			{
-				exit(0);
-			}
 	// energy-offset to keep eigenvalues negative
 
 	std::string appendix("");
@@ -297,9 +279,9 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 	  case (1):
 	    hamBarrier->computeHardcore();
 	    break;
-	    /*  case (2):
+	  case (2):
 	  hamBarrier->computeCoulomb(false);
-	  break;*/
+		break;
 	  }
 	/*
 	if (m_iInteractionType == 0)
@@ -329,25 +311,19 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 	case Operator::SPARSE_COMPLEX:
 		m_bComplex = true;
 		nCount = basis.dimension() * 2;
-
-		break;
-	case Operator::SPARSE_COMPLEX_EIGEN: // @suppress("Symbol is not resolved")
-		m_bComplex = true;
-		nCount = basis.dimension() * 2;
-
 		break;
 	}
-	std::vector<double> pdEigVec;
-	std::vector<double> pdEigVal;
-
+	double
+	*pdEigVec = 0,
+	*pdEigVal = 0;
 	glLogger.info("ncount =(%d), m_iEigsToFind =(%d), dimension = (%d)",
 			nCount, m_iEigsToFind, basis.dimension() );
-	unsigned int trialSize = nCount*m_iEigsToFind;
+	int trialSize = nCount*m_iEigsToFind;
 
 	try
 	{
 
-		pdEigVec.reserve(trialSize);
+		pdEigVec = new double [trialSize];
 	}
 	catch(...)
 	{
@@ -357,7 +333,7 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 	trialSize = basis.dimension();
 	try
 	{
-		pdEigVal.reserve ( trialSize); // this is too much, n_eigsTo>Find should be enough here
+		pdEigVal = new double [ trialSize ]; // this is too much, n_eigsTo>Find should be enough here
 	}
 	catch(...)
 	{
@@ -397,10 +373,11 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 	// store re sults in list<persist_eigSt>
 	persist_eigSt EigSt ( &basis, m_bComplex );
 
-	for (unsigned int i = 0; i < m_iEigsToFind; i++) {
+	for (int i = 0; i < m_iEigsToFind; i++) {
 		if (m_bComplex)
 		{
-			EigSt.inAllCoef ( &pdEigVec[i*basis.dimension()] ) ;
+			EigSt.inAllCoef ( &( ((std::complex<double>*) pdEigVec)
+					[i*basis.dimension()] ) );
 
 			//EigSt.inAllCoef ( &( pdEigVec [i*basis.dimension()] ) );
 
@@ -433,8 +410,8 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 		ERROR("Position File not found or not valid");
 		delete hamBarrier;
 		hamBarrier = 0;
-		pdEigVal.clear();
-		pdEigVec.clear();
+		delete [] pdEigVal;
+		delete [] pdEigVec;
 		listEigVectors.clear();
 		return m_iEigsToFind;
 	}
@@ -564,8 +541,8 @@ int gaussian::diagonalize (TRESULT & listEigVectors, yosBasis & basis)
 
 	delete hamBarrier;
 	hamBarrier = 0;
-	pdEigVal.clear();
-	pdEigVec.clear();
+	delete [] pdEigVal;
+	delete [] pdEigVec;
 	listEigVectors.clear();
 	return m_iEigsToFind;
 }

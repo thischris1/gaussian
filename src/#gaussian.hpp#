@@ -37,7 +37,7 @@ private:
   */
 	bool m_potentialOnly;
   //const static int MAX_FILENAMELENGTH;
-
+ 
 public:
   /*!
     \fn gaussian ()
@@ -148,7 +148,7 @@ private:
     m_iReqSz = which z-component of spin is required (meaningful only if spinYes = 1)
     m_bComplex = true->use complex eigenvectors
    */
-  unsigned int
+  int 
     m_iNe,
     m_iNm,
     m_iSpinYes,
@@ -172,7 +172,7 @@ private:
     m_iXKMax = maximum k to sum over in direction of x for calculating matrix-elements
     m_iYKMax = maximum k to sum over in direction of y for calculating matrix-elements
   */  
-  unsigned int
+  int   
     m_iMatType, 
     m_iPotentialType,
     m_iInteractionType,
@@ -196,7 +196,7 @@ private:
     m_iVectorFileFormat of Vector's file. 0->ascii, 1->binary, 2->fortran's unformatted
     m_iEigsToFind number of eigenvalues/vectors to find
   */
-  unsigned int
+  int 
     m_iVectorFileFormat,
     m_iEigsToFind;
  
